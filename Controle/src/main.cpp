@@ -46,22 +46,29 @@ void setup()
 void loop()
 {
 
+ bool correctionCD = MoteurCoudeDroit.AngleVerification(false);
+
+
+
+  if(!correctionCD) { //ne s' active que si le moteur n'a pas été corrigé par la fonction AngleVerification() (donc était déjà dans les limites)
+    if(modeLibre) {
+      MoteurCoudeDroit.FollowMvt();
+    } else {
+      if(PressionBrasDroitDroit.capteurDetecte()) {
+        MoteurCoudeDroit.Turn(true);
+      } else if(PressionBrasDroitGauche.capteurDetecte()) {
+        MoteurCoudeDroit.Turn(false);
+      } else {
+        MoteurCoudeDroit.Stop();
+      }
+    }
+  }
+
   Logger::Log(String(PressionBrasDroitDroit.capteurDetecte()));  
   Logger::Log(String(PressionBrasDroitGauche.capteurDetecte()));  
   Logger::Log(String(PressionBrasDroitHaut.capteurDetecte()));  
-  Logger::Log(String(PressionBrasDroitBas.capteurDetecte()));  
+  Logger::Log(String(PressionBrasDroitBas.capteurDetecte()));
 
-  if(modeLibre) {
-    MoteurCoudeDroit.FollowMvt();
-  } else {
-    if(PressionBrasDroitDroit.capteurDetecte()) {
-      MoteurCoudeDroit.Turn(true);
-    } else if(PressionBrasDroitGauche.capteurDetecte()) {
-      MoteurCoudeDroit.Turn(false);
-    } else {
-      MoteurCoudeDroit.Stop();
-    }
-  }
 
   // Mise à jour de la télémétrie pour le serveur Web (Core 0)
   TelemetrieMoteur telemetry;

@@ -18,6 +18,7 @@ class MoteurBrushless {
         void setPosition(float pos, uint8_t canId); // Régler la position du moteur à une valeur spécifique en degrés, avec un ID CAN pour les commandes relayées
         void PrintData(); // Affiche les données actuelles du moteur (position, RPM, température, etc.)
         void FollowMvt();
+        bool AngleVerification(bool inverseSymetrie); // Vérifie si l'angle du moteur est dans les limites définies, retourne true si l'angle a été modifié, false si il était déjà dans les limites
         float GetTempMotor() const { return _vesc.data.tempMotor; }
         float GetVoltage() const { return _vesc.data.inpVoltage; }
         float GetPosition() const { return _vesc.data.pidPos; }

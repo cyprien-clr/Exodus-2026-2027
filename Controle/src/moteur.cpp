@@ -84,3 +84,30 @@ float MoteurBrushless::EstimerChargeKg(float brasDeLevierMetres, float kt) const
     float chargeKg = couple / (brasDeLevierMetres * 9.81f); //Pour l'instant mis en cte, a changer si nécéssaire
     return chargeKg;
 }
+
+
+bool MoteurBrushless::AngleVerification(bool inverseSymetrie) {
+    if(_vesc.getVescValues()) { //Actualise les données du VESC pour avoir la position actuelle du moteur et non la position de la dernière fois qu'on a appelé les données du VESC (lire commentaire en haut de la page)
+    int posActuelle = Position();
+
+    if (posActuelle < degmin_moteur) {// Si on est sous le min, on veut tourner pour augmenter l'angle
+        if(inverseSymetrie == false){
+            Turn(false); 
+        } 
+        else {
+            Turn(true);
+        }
+        return true;
+    } 
+    else if (posActuelle > degmax_moteur) {// Si on est au-dessus du max, on veut tourner pour diminuer l'angle
+        if(inverseSymetrie == false){
+            Turn(true);
+        } 
+        else {
+            Turn(false);
+        }
+        return true;
+    } 
+    return false;
+    }
+}
