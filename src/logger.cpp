@@ -1,0 +1,22 @@
+//Fichier qui permet de faire du logging en affichant l'id du core qui affiche le message, pour faciliter le débuggage, vu qu'on utilise les deux cores de l'ESP32 pour faire tourner le projet.
+
+#include "logger.h"
+
+std::atomic_flag Logger::disponible = ATOMIC_FLAG_INIT; // token pour éviter que les messages de log de différents cores s'entremêlent et deviennent illisibles
+
+void Logger::Log(const String &message)
+{
+  while (disponible.test_and_set()) // essaye de prendre le token, si il est déjà pris, attend et réessaie
+  {
+    yield();
+  }
+
+  int coreID = xPortGetCoreID(); // récupère l'id du core sur lequel l'action est effectuée
+
+  Serial.print("[Core ");
+  Serial.print(coreID);
+  Serial.print("] ");
+  Serial.println(message);
+
+  disponible.clear(); // rend le token
+}
