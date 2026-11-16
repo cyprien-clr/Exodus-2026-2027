@@ -110,4 +110,5 @@ bool MoteurBrushless::AngleVerification(bool inverseSymetrie) {
     } 
     return false;
     }
-}
+}//yo
+gytrfvdry
