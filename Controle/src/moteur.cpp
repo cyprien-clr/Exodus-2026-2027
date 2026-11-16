@@ -1,4 +1,5 @@
 // Fichier pour implémenter les fonctions de la classe MoteurBrushless déclarée dans moteur.h, pour pouvoir controller et avoir un retour d'information sur les moteurs brushless.
+// Pour empécher l'encodeur de donner des fausses valeurs dangereuses, on peut créer une fonction qui vérifie qu'à chaque boucle, l'angle du moteur de varie que d'une quatité maximale définie par rapport à la dernière boucle (si l'encodeur bouge mais n'est pas débranché, il va d'un coup donner une valeur d'angle possible mais incohérente par rapport à la valeur précédente)
 #include "moteur.h"
 
 MoteurBrushless::MoteurBrushless(int can_id) : _can_id(can_id) { // Initialisation du VESC et de la communication série
@@ -10,12 +11,10 @@ MoteurBrushless::MoteurBrushless(int can_id) : _can_id(can_id) { // Initialisati
 
 void MoteurBrushless::Turn(bool senshoraire) { // Tourne le moteur dans le sens horaire ou antihoraire selon la position actuelle du moteur et les limites définies
     _vesc.getVescValues();
-    if (senshoraire && MoteurBrushless::Position() > degmin_moteur) {
+    if (senshoraire) {
         _vesc.setRPM(_RPM_AVANT_moteur, _can_id);
     } else if(MoteurBrushless::Position() < degmax_moteur) {
         _vesc.setRPM(_RPM_ARRIERE_moteur, _can_id);
-    } else { //sécurité pour éviter de dépasser les limites physiques du bras, on arrête le moteur et on affiche la position actuelle du moteur
-        MoteurBrushless::Stop();
     }
     Logger::Log(String(_vesc.data.pidPos));
 }
@@ -58,10 +57,9 @@ void MoteurBrushless::PrintData() { // Affiche les données actuelles du moteur 
 
 void MoteurBrushless::FollowMvt() { // Fonction pour faire suivre le mouvement du bras par le moteur  en utilisant les données de position et d'effort du VESC
 
-    if (_vesc.getVescValues()) {
     float effort = _vesc.data.avgMotorCurrent; 
     float angle = _vesc.data.pidPos;
-    
+        
     if (abs(effort) > ZONE_MORTE) {
 
         angle += (effort * FACTEUR_ASSISTANCE);
@@ -70,7 +68,7 @@ void MoteurBrushless::FollowMvt() { // Fonction pour faire suivre le mouvement d
     } else {
         Logger::Log("Effort: "+String(effort)+" | Zone Morte");
     }
-  }
+  
 
 }
 
@@ -87,7 +85,6 @@ float MoteurBrushless::EstimerChargeKg(float brasDeLevierMetres, float kt) const
 
 
 bool MoteurBrushless::AngleVerification(bool inverseSymetrie) {
-    if(_vesc.getVescValues()) { //Actualise les données du VESC pour avoir la position actuelle du moteur et non la position de la dernière fois qu'on a appelé les données du VESC (lire commentaire en haut de la page)
     int posActuelle = Position();
 
     if (posActuelle < degmin_moteur) {// Si on est sous le min, on veut tourner pour augmenter l'angle
@@ -109,5 +106,20 @@ bool MoteurBrushless::AngleVerification(bool inverseSymetrie) {
         return true;
     } 
     return false;
+    
+}
+
+bool MoteurBrushless::Actualiser() {
+
+    if (!_vesc.getVescValues()) { // plus de communication avec le VESC, on arrête le moteur et on affiche un message d'erreur
+        Logger::Log("Perte de communication VESC (ID: " + String(_can_id) + ")");
+        Stop();
+        return false; 
     }
+    if (_vesc.data.error != 0) { //panne active détectée, on arrête le moteur et on affiche un message d'erreur
+        Logger::Log("Défaut matériel VESC/Encodeur, code = " + String(_vesc.data.error));
+        Stop();
+        return false; // Signale un défaut critique au main
+    }
+    return true; // Aucun problème détecté
 }

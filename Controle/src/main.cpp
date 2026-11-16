@@ -46,14 +46,18 @@ void setup()
 void loop()
 {
 
+if (!MoteurCoudeDroit.Actualiser()) { //Lance la fonction actualiser(), qui actualise les informations du vesc, qui stoppe le moteur et retourne false si il y a un problème, et qui retourne true si il n'y a pas de problème
+    delay(20);
+    return;
+  }
+
  bool correctionCD = MoteurCoudeDroit.AngleVerification(false);
-
-
 
   if(!correctionCD) { //ne s' active que si le moteur n'a pas été corrigé par la fonction AngleVerification() (donc était déjà dans les limites)
     if(modeLibre) {
       MoteurCoudeDroit.FollowMvt();
-    } else {
+    } 
+    else {
       if(PressionBrasDroitDroit.capteurDetecte()) {
         MoteurCoudeDroit.Turn(true);
       } else if(PressionBrasDroitGauche.capteurDetecte()) {
